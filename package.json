@@ -1,0 +1,33 @@
+{
+  "name": "travel-ops-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
+    "@tanstack/query-persist-client-core": "^5.75.2",
+    "@tanstack/query-sync-storage-persister": "^5.75.2",
+    "@tanstack/react-query": "^5.75.2",
+    "date-fns": "^4.1.0",
+    "localforage": "^1.10.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.71.1",
+    "react-router-dom": "^6.26.2",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  },
+  "description": "필리핀처럼 인터넷이 느린 환경을 전제로, **가볍고 빠르게 로딩 + 강한 캐시(오프라인/저대역폭 대응)** 를 목표로 만든 기본 프론트엔드 템플릿입니다.",
+  "main": "vite.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

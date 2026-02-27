@@ -1,0 +1,8 @@
+email,password,role,branch,display_name
+master@test.com,Master123,master_office,,Master Office
+cebu01@test.com,Pass123,office,CEBU,Cebu Staff 01
+cebu02@test.com,Pass123,office,CEBU,Cebu Staff 02
+clark01@test.com,Pass123,office,CLARK,Clark Staff 01
+manila01@test.com,Pass123,office,MANILA,Manila Staff 01
+chiangmai01@test.com,Pass123,office,CHIANGMAI,Chiangmai Staff 01
+fukuoka01@test.com,Pass123,office,FUKUOKA,Fukuoka Staff 01
