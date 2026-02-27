@@ -125,3 +125,10 @@ dist
 # Temporary files
 *.tmp
 *.temp
+
+# Unnecessary files for deployment
+sql/
+check_*.js
+test_*.js
+bulk_*.mjs
+employees.csv
