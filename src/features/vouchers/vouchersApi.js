@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase.js';
 
 const LIST_COLUMNS =
-  'id,status,partner_name,play_date,tee_time,pax,currency,amount,paid_status,updated_at,created_at,voucher_no,request_note,manager,reserver_name,schedule_1,schedule_2,schedule_3,schedule_4,booking_code';
+  'id,status,partner_name,play_date,tee_time,pax,currency,amount,paid_status,updated_at,created_at,voucher_no,request_note,manager,reserver_name,schedule_1,schedule_2,schedule_3,schedule_4,booking_code,change_tee_time_1';
 
 export async function listVouchers({
   branch = 'ALL',
