@@ -293,9 +293,9 @@ export default function VoucherModal({ isOpen, onClose, onSubmit, initialData })
       result += ` ${extra.join(' ')}`;
     }
 
-    if (changeTee) {
-      result += ' >>';
-    }
+    // if (changeTee) {
+    //   result += ' >>';
+    // }
 
     return result.trim();
   };
@@ -317,7 +317,7 @@ export default function VoucherModal({ isOpen, onClose, onSubmit, initialData })
     const cleaned = { ...data };
 
     cleaned.schedule_1 = data.schedule_1_text || '';
-    // cleaned.change_tee_time_1 = data.schedule_1_change_tee; // Removed to prevent schema error
+    cleaned.change_tee_time_1 = data.schedule_1_change_tee; // Save checkbox state
 
     // Map customer_name to reserver_name if reserver_name is empty
     if (!cleaned.reserver_name && cleaned.customer_name) {
