@@ -401,8 +401,6 @@ export default function VoucherModal({ isOpen, onClose, onSubmit, initialData })
 
   const readOnlyInputStyle = {
     ...inputStyle,
-    background: '#2c3e50', // Slightly darker/same as section to blend or distinct?
-    // Let's use a distinct disabled look
     background: '#233040',
     color: '#95a5a6',
     cursor: 'not-allowed',
