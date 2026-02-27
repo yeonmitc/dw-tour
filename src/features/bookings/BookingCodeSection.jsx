@@ -5,6 +5,7 @@ export default function BookingCodeSection({
   productCode,
   partnerCode,
   baseDate,
+  holidayNotices = [],
   filteredProductTypes,
   filteredPartners,
   errors,
@@ -278,21 +279,40 @@ export default function BookingCodeSection({
           marginTop: 12,
           fontSize: 13,
           display: 'grid',
-          gridTemplateColumns: '1.1fr 1.4fr',
+          gridTemplateColumns: '1.2fr 1fr',
           gap: 16,
-          alignItems: 'flex-end',
+          alignItems: 'flex-start',
         }}
       >
         <div>
           <div className="label" style={{ marginBottom: 5 }}>
             Base Date <span style={{ color: 'red' }}>*</span>
           </div>
-          <input
-            type="date"
-            className="input"
-            {...register('base_date', { required: 'Base Date is required' })}
-            style={{ width: '100%' }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <input
+              type="date"
+              className="input"
+              {...register('base_date', { required: 'Base Date is required' })}
+              style={{ width: 180, maxWidth: '100%', fontSize: 16 }} // Increased font size
+            />
+            {holidayNotices && holidayNotices.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {holidayNotices.map((t, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      fontSize: 16, // Increased font size to match input/product type
+                      fontWeight: 800,
+                      color: '#f1c40f',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {t}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {errors.base_date && (
             <span style={{ color: 'red', fontSize: 12 }}>{errors.base_date.message}</span>
           )}
@@ -302,16 +322,17 @@ export default function BookingCodeSection({
             color: 'var(--accent)',
             display: 'flex',
             flexDirection: 'column',
-            maxWidth: 420,
+            width: '100%',
           }}
         >
           <span style={{ marginBottom: 4 }}>Booking Code</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
             <input
               className="input"
               {...register('booking_code')}
               style={{
                 flex: 1,
+                width: '100%',
               }}
               placeholder="직접 입력 또는 추천 코드 사용"
             />

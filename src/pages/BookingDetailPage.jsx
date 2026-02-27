@@ -69,6 +69,9 @@ export default function BookingDetailPage() {
   const currentUser = useAuthStore((s) => s.user);
   const currentProfile = useAuthStore((s) => s.profile);
 
+  // Define effectiveBranch early to avoid ReferenceError
+  const effectiveBranch = getEffectiveBranch(null);
+
   // Watch fields
   const startDate = watch('start_date');
   const endDate = watch('end_date');
@@ -82,6 +85,119 @@ export default function BookingDetailPage() {
   const customerNameEn = watch('customer_name_en');
   const pax = watch('pax');
   const firstHotelName = watch('first_hotel_name');
+  const branch = watch('branch');
+
+  const computedNights = useMemo(() => {
+    if (!startDate || !endDate) return null;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    const diffTime = end.getTime() - start.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return null;
+    return diffDays;
+  }, [startDate, endDate]);
+
+  const holidayBranch = branch || effectiveBranch || null;
+  const holidayLabel = useMemo(() => {
+    if (holidayBranch === 'PHILIPPINES') return 'Philippines Holiday';
+    if (holidayBranch === 'FUKUOKA') return 'Japan Holiday';
+    if (holidayBranch === 'CHIANGMAI') return 'Thailand Holiday';
+    return 'Holiday';
+  }, [holidayBranch]);
+
+  const [holidayNotices, setHolidayNotices] = useState([]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!startDate || !endDate) {
+        setHolidayNotices([]);
+        return;
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+        setHolidayNotices([]);
+        return;
+      }
+
+      const dates = [];
+      const cursor = new Date(start);
+      cursor.setHours(0, 0, 0, 0);
+      const endCursor = new Date(end);
+      endCursor.setHours(0, 0, 0, 0);
+
+      let guard = 0;
+      while (cursor <= endCursor && guard < 120) {
+        dates.push(cursor.toISOString().slice(0, 10));
+        cursor.setDate(cursor.getDate() + 1);
+        guard += 1;
+      }
+
+      if (dates.length === 0) {
+        setHolidayNotices([]);
+        return;
+      }
+
+      // Query Logic:
+      // If holidayBranch is set, we want holidays that are EITHER specific to that branch OR have no branch (global).
+      // If holidayBranch is NOT set (e.g. initial load or all), we might show nothing or global.
+      // The user requested: "if Philippines selected, show only Philippines holiday"
+      // "if Japan selected, show only Japan holiday"
+      // "if Chiangmai selected, show only Thailand holiday"
+
+      let q = supabase
+        .from('holidays')
+        .select('date, branch, name')
+        .eq('is_active', true)
+        .in('date', dates);
+
+      if (holidayBranch) {
+        // Fetch branch-specific holidays AND global holidays (null branch)
+        // OR logic: branch is null OR branch equals holidayBranch
+        q = q.or(`branch.is.null,branch.eq.${holidayBranch}`);
+      } else {
+        // If no branch selected, maybe fetch nothing? or global only?
+        // Let's assume global only if no branch
+        q = q.is('branch', null);
+      }
+
+      const { data, error } = await q.order('date');
+      if (error) {
+        setHolidayNotices([]);
+        return;
+      }
+
+      // Deduplicate by date
+      const uniqueHolidays = [];
+      const seenDates = new Set();
+      data?.forEach((h) => {
+        if (!seenDates.has(h.date)) {
+          seenDates.add(h.date);
+          uniqueHolidays.push(h);
+        }
+      });
+
+      const list =
+        uniqueHolidays.map((h) => {
+          const d = h.date;
+          const mmdd =
+            typeof d === 'string' && d.length >= 10 ? `${d.slice(5, 7)}/${d.slice(8, 10)}` : '';
+
+          // Determine label based on the record's branch
+          let label = 'Holiday';
+          if (h.branch === 'PHILIPPINES') label = 'Philippines Holiday';
+          else if (h.branch === 'FUKUOKA' || h.branch === 'JAPAN') label = 'Japan Holiday';
+          else if (h.branch === 'CHIANGMAI') label = 'Thailand Holiday';
+          else label = 'Holiday'; // Global or fallback
+
+          return `${mmdd} ${label}`;
+        }) ?? [];
+      setHolidayNotices(list.filter(Boolean));
+    };
+
+    run();
+  }, [startDate, endDate, holidayBranch]);
 
   const [duration, setDuration] = useState('');
   const [addingMaster, setAddingMaster] = useState(null);
@@ -335,7 +451,6 @@ export default function BookingDetailPage() {
     queryFn: () => getMasterData('vehicle_master'),
   });
 
-  const effectiveBranch = getEffectiveBranch(null);
   const currentRegion = effectiveBranch ? BRANCH_REGION_MAP[effectiveBranch] : null;
   const regionForFilters = isNew ? bookingRegion || null : bookingRegion || currentRegion;
   const regionLocked = isNew && !regionForFilters;
@@ -1013,6 +1128,7 @@ export default function BookingDetailPage() {
             productCode={productCode}
             partnerCode={partnerCode}
             baseDate={baseDate}
+            holidayNotices={holidayNotices}
             filteredProductTypes={filteredProductTypes}
             filteredPartners={filteredPartners}
             errors={errors}
@@ -1087,14 +1203,87 @@ export default function BookingDetailPage() {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 2fr',
+                  gridTemplateColumns: '3fr 2fr 2fr 1fr', // 3:2:2:1 Ratio
                   gap: 16,
+                  alignItems: 'end',
                   marginTop: 16,
                   padding: 12,
                   borderRadius: 8,
                   border: '1px solid var(--line)',
                 }}
               >
+                <div>
+                  <div className="label" style={{ marginBottom: 5, fontSize: 14, fontWeight: 800 }}>
+                    Schedule date / 박
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map((n) => {
+                        const isActive = computedNights === n;
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            className="btn secondary"
+                            title={`SC ${n}`}
+                            style={{
+                              height: 32,
+                              width: 32,
+                              padding: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 12,
+                              background: isActive ? '#f1c40f' : undefined,
+                              color: isActive ? '#000' : undefined,
+                              border: isActive ? '1px solid #f39c12' : undefined,
+                              fontWeight: isActive ? 'bold' : undefined,
+                            }}
+                            onClick={() => {
+                              if (!startDate) return;
+                              const d = new Date(startDate);
+                              if (Number.isNaN(d.getTime())) return;
+                              d.setDate(d.getDate() + n);
+                              const iso = d.toISOString().slice(0, 10);
+                              setValue('end_date', iso);
+                            }}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
+
+                      <select
+                        className="select"
+                        value={
+                          computedNights != null && computedNights >= 8 && computedNights <= 40
+                            ? String(computedNights)
+                            : ''
+                        }
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          if (!startDate) return;
+                          const d = new Date(startDate);
+                          if (Number.isNaN(d.getTime())) return;
+                          if (!Number.isFinite(v) || v < 8 || v > 40) return;
+                          d.setDate(d.getDate() + v);
+                          const iso = d.toISOString().slice(0, 10);
+                          setValue('end_date', iso);
+                        }}
+                        style={{ height: 32, fontSize: 12, padding: '0 8px' }}
+                      >
+                        <option value="">8~40</option>
+                        {Array.from({ length: 33 }, (_, i) => i + 8).map((n) => (
+                          <option key={n} value={String(n)}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <div className="label" style={{ marginBottom: 5 }}>
                     Currency
@@ -1103,7 +1292,10 @@ export default function BookingDetailPage() {
                     className="select"
                     {...register('currency')}
                     disabled={regionLocked}
-                    style={{ width: '100%', border: '1px solid rgba(241, 196, 15, 0.5)' }}
+                    style={{
+                      width: '100%',
+                      border: '1px solid rgba(241, 196, 15, 0.5)',
+                    }}
                   >
                     {CURRENCY_OPTIONS.map((c) => (
                       <option key={c.value} value={c.value}>
@@ -1116,68 +1308,26 @@ export default function BookingDetailPage() {
                   <div className="label" style={{ marginBottom: 5 }}>
                     Tour Fee
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                      type="number"
-                      className="input"
-                      {...register('total_amount', { valueAsNumber: true })}
-                      placeholder="0"
-                      style={{ flex: 1, border: '1px solid rgba(241, 196, 15, 0.5)' }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <div
-                        style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}
-                      >
-                        Schedule date / 박
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {[1, 2, 3, 4, 5, 6].map((n) => {
-                          let isActive = false;
-                          if (startDate && endDate) {
-                            const start = new Date(startDate);
-                            const end = new Date(endDate);
-                            if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
-                              const diffTime = end.getTime() - start.getTime();
-                              const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                              if (diffDays === n) isActive = true;
-                            }
-                          }
-
-                          return (
-                            <button
-                              key={n}
-                              type="button"
-                              className="btn secondary"
-                              title={`SC ${n}`}
-                              style={{
-                                height: 32,
-                                width: 32,
-                                padding: 0,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 12,
-                                background: isActive ? '#f1c40f' : undefined,
-                                color: isActive ? '#000' : undefined,
-                                border: isActive ? '1px solid #f39c12' : undefined,
-                                fontWeight: isActive ? 'bold' : undefined,
-                              }}
-                              onClick={() => {
-                                if (!startDate) return;
-                                const d = new Date(startDate);
-                                if (Number.isNaN(d.getTime())) return;
-                                d.setDate(d.getDate() + n);
-                                const iso = d.toISOString().slice(0, 10);
-                                setValue('end_date', iso);
-                              }}
-                            >
-                              {n}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  <input
+                    type="number"
+                    className="input"
+                    {...register('total_amount', { valueAsNumber: true })}
+                    placeholder="0"
+                    style={{ width: '100%', border: '1px solid rgba(241, 196, 15, 0.5)' }}
+                  />
+                </div>
+                <div>
+                  <div className="label" style={{ marginBottom: 5 }}>
+                    Deposit date / 입금날짜
                   </div>
+                  <input
+                    type="text"
+                    className="input"
+                    {...register('deposit_date')}
+                    placeholder="MM/DD"
+                    maxLength={5}
+                    style={{ width: '100%', border: '1px solid rgba(241, 196, 15, 0.5)' }}
+                  />
                 </div>
               </div>
 

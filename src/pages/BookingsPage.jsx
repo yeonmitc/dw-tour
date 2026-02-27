@@ -146,12 +146,12 @@ const getStatusTag = (row) => {
 };
 
 const getRowBackground = (status) => {
-  if (status === 'CHANGE_INFO') return 'rgba(231, 76, 60, 0.1)'; // Red 10%
+  // if (status === 'CHANGE_INFO') return 'rgba(231, 76, 60, 0.1)'; // Red 10%
   // if (status === 'REQUESTED') return 'rgba(231, 76, 60, 0.1)'; // Red 10% - Removed as per user request
-  if (status === 'INPROGRESS') return 'rgba(65, 105, 225, 0.1)'; // Royal Blue 10%
-  if (status === 'GUID_PAY') return 'rgba(46, 204, 113, 0.1)'; // Green 10%
-  if (status === 'CANCLE') return 'rgba(192, 57, 43, 0.1)'; // Dark Red 10%
-  if (status === 'CLOSED') return 'rgba(127, 140, 141, 0.1)'; // Gray 10%
+  // if (status === 'INPROGRESS') return 'rgba(65, 105, 225, 0.1)'; // Royal Blue 10%
+  // if (status === 'GUID_PAY') return 'rgba(46, 204, 113, 0.1)'; // Green 10%
+  // if (status === 'CANCLE') return 'rgba(192, 57, 43, 0.1)'; // Dark Red 10%
+  // if (status === 'CLOSED') return 'rgba(127, 140, 141, 0.1)'; // Gray 10%
   return 'transparent';
 };
 
@@ -271,6 +271,7 @@ export default function BookingsPage() {
     setEditingId(row.id);
     setEditValues({
       total_amount: row.total_amount,
+      deposit_date: row.deposit_date,
       currency: row.currency,
       status: row.status,
       memo: row.memo,
@@ -1067,13 +1068,13 @@ export default function BookingsPage() {
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: 'var(--panel)' }}>
               <tr>
                 <th style={{ ...gridStyle.th, width: 40 }}>Edit</th>
-                <th style={{ ...gridStyle.th, width: 80, color: 'var(--accent)' }}>Create</th>
+                <th style={{ ...gridStyle.th, width: 60, color: 'var(--accent)' }}>Create</th>
                 <th style={{ ...gridStyle.th, width: 90 }}>Tour Fee</th>
                 <th style={{ ...gridStyle.th, width: 80 }}>Status</th>
                 <th style={{ ...gridStyle.th, width: 120 }}>Memo</th>
-                <th style={{ ...gridStyle.th, width: 60 }}>Partner</th>
+                <th style={{ ...gridStyle.th, width: 140 }}>Partner</th>
                 <th style={{ ...gridStyle.th, width: 110 }}>Code</th>
-                <th style={{ ...gridStyle.th, width: 150 }}>Hotel/RT</th>
+                <th style={{ ...gridStyle.th, width: 110 }}>Hotel/RT</th>
                 <th style={{ ...gridStyle.th, width: 40 }}>SC</th>
                 <th style={{ ...gridStyle.th, width: 80 }}>Flight</th>
                 <th style={{ ...gridStyle.th, width: 120 }}>Guide/Vehicle</th>
@@ -1082,7 +1083,7 @@ export default function BookingsPage() {
                 <th style={{ ...gridStyle.th, width: 100 }}>3TH</th>
                 <th style={{ ...gridStyle.th, width: 100 }}>4TH</th>
                 <th style={{ ...gridStyle.th, width: 100 }}>5TH</th>
-                <th style={{ ...gridStyle.th, width: 100 }}>6TH</th>
+                <th style={{ ...gridStyle.th, width: 140 }}>6TH</th>
               </tr>
             </thead>
             <tbody>
@@ -1179,31 +1180,52 @@ export default function BookingsPage() {
                       }}
                     >
                       {editingId === row.id ? (
-                        <input
-                          type="number"
-                          value={editValues.total_amount || ''}
-                          onChange={(e) => handleTourFeeChange(e.target.value)}
+                        <div
+                          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
                           onClick={(e) => e.stopPropagation()}
-                          style={{ width: '100%', fontSize: 11, padding: 2 }}
-                        />
+                        >
+                          <input
+                            type="number"
+                            value={editValues.total_amount || ''}
+                            onChange={(e) => handleTourFeeChange(e.target.value)}
+                            style={{ width: '100%', fontSize: 11, padding: 2 }}
+                          />
+                          <input
+                            type="text"
+                            value={editValues.deposit_date || ''}
+                            onChange={(e) => handleEditChange('deposit_date', e.target.value)}
+                            placeholder="MM/DD"
+                            maxLength={5}
+                            style={{ width: 62, fontSize: 11, padding: 2, textAlign: 'center' }}
+                          />
+                        </div>
                       ) : (
-                        (() => {
-                          const amount = row.total_amount?.toLocaleString() ?? '0';
-                          switch (row.currency) {
-                            case 'KRW':
-                              return `₩ ${amount}`;
-                            case 'THB':
-                              return `฿ ${amount}`;
-                            case 'PHP':
-                              return `₱ ${amount}`;
-                            case 'USD':
-                              return `$ ${amount}`;
-                            case 'JPY':
-                              return `¥ ${amount}`;
-                            default:
-                              return amount;
-                          }
-                        })()
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div>
+                            {(() => {
+                              const amount = row.total_amount?.toLocaleString() ?? '0';
+                              switch (row.currency) {
+                                case 'KRW':
+                                  return `₩ ${amount}`;
+                                case 'THB':
+                                  return `฿ ${amount}`;
+                                case 'PHP':
+                                  return `₱ ${amount}`;
+                                case 'USD':
+                                  return `$ ${amount}`;
+                                case 'JPY':
+                                  return `¥ ${amount}`;
+                                default:
+                                  return amount;
+                              }
+                            })()}
+                          </div>
+                          {row.deposit_date ? (
+                            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)' }}>
+                              {row.deposit_date}
+                            </div>
+                          ) : null}
+                        </div>
                       )}
                     </td>
 
@@ -1271,6 +1293,8 @@ export default function BookingsPage() {
                           onClick={(e) => e.stopPropagation()}
                           style={{ width: '100%', fontSize: 11, padding: 2 }}
                         />
+                      ) : row.customer_name ? (
+                        `${row.partner_name || row.partner_code} (${row.customer_name})`
                       ) : (
                         row.partner_name || row.partner_code
                       )}
