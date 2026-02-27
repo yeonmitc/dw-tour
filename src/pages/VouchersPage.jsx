@@ -14,18 +14,19 @@ import { addDaysISO, fmtDate, todayISO } from '../utils/date.js';
 const STATUS_OPTIONS = ['ALL', 'NEW', 'REQUESTED', 'CONFIRMED', 'CANCLE', 'CLOSED', 'CHANGE_INFO'];
 
 const getRowStyle = (status) => {
-  if (status === 'CANCLE') return { background: '#c0392b', color: '#fff' };
-  if (status === 'CLOSED') return { background: '#7f8c8d', color: '#fff' };
-  if (status === 'CHANGE_INFO') return { background: '#e74c3c', color: '#fff' };
-  if (status === 'REQUESTED') return { background: '#e74c3c', color: '#fff' };
-  if (status === 'INPROGRESS') return { background: '#4169e1', color: '#fff' };
-  if (status === 'GUID_PAY') return { background: '#2ecc71', color: '#fff' };
+  // if (status === 'CANCLE') return { background: '#c0392b', color: '#fff' };
+  // if (status === 'CLOSED') return { background: '#7f8c8d', color: '#fff' };
+  // if (status === 'CHANGE_INFO') return { background: '#e74c3c', color: '#fff' };
+  // if (status === 'REQUESTED') return { background: '#e74c3c', color: '#fff' };
+  // if (status === 'INPROGRESS') return { background: '#4169e1', color: '#fff' };
+  // if (status === 'GUID_PAY') return { background: '#2ecc71', color: '#fff' };
   return {};
 };
 
 const get1THStyle = (row) => {
-  const schedule = row.schedule_1 || row.tee_time || '';
-  const isChangeTee = String(schedule).includes('>>');
+  // const schedule = row.schedule_1 || row.tee_time || '';
+  // const isChangeTee = String(schedule).includes('>>');
+  const isChangeTee = Boolean(row.change_tee_time_1); // Use checkbox field
   const isPaid = row.paid_status === 'PAID';
 
   if (isPaid) return { background: 'rgba(46, 204, 113, 0.1)', color: 'var(--text)' }; // Green 10%
