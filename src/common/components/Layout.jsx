@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import logo from '../../assets/logo.svg';
 import { signOut } from '../../features/auth/authApi.js';
 import { useAuthStore } from '../../store/authStore.js';
 import Topbar from './Topbar.jsx';
@@ -15,8 +16,27 @@ export default function Layout() {
   return (
     <div className="container">
       <aside className="sidebar">
-        <div className="brand">DW Tour</div>
-        <div style={{ color: 'var(--muted)', fontSize: 12 }}>{user?.email ?? '-'}</div>
+        <Link
+          to="/bookings"
+          className="brand"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            textDecoration: 'none',
+            color: 'inherit',
+          }}
+        >
+          <img
+            src={logo}
+            alt="DW Tour Logo"
+            style={{ width: 32, height: 32, borderRadius: '50%' }}
+          />
+          DW Tour
+        </Link>
+        <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 20 }}>
+          {user?.email ?? '-'}
+        </div>
 
         <div className="nav">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
