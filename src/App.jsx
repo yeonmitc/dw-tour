@@ -1,43 +1,37 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import Layout from './common/components/Layout.jsx'
-import LoginPage from './pages/LoginPage.jsx'
-import DashboardPage from './pages/DashboardPage.jsx'
-import BookingsPage from './pages/BookingsPage.jsx'
-import BookingDetailPage from './pages/BookingDetailPage.jsx'
-import VouchersPage from './pages/VouchersPage.jsx'
-import SettingsPage from './pages/SettingsPage.jsx'
-import GolfReportPage from './pages/GolfReportPage.jsx'
-import HotelReportPage from './pages/HotelReportPage.jsx'
-import NotFoundPage from './pages/NotFoundPage.jsx'
-import { useAuthStore } from './store/authStore.js'
+import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import { AdminProvider } from './features/new/Admin.jsx'
+import NewLayout from './components/NewLayout.jsx'
 
-function Protected({ children }) {
-  const session = useAuthStore(s => s.session)
-  if (!session) return <Navigate to="/login" replace />
-  return children
-}
+const ReservationListPage = lazy(() => import('./pages/new/ReservationListPage.jsx'))
+const ReservationDetailPage = lazy(() => import('./pages/new/ReservationDetailPage.jsx'))
+const VouchersNewPage = lazy(() => import('./pages/new/VouchersNewPage.jsx').then(m => ({ default: m.VouchersNewPage })))
+const VoucherDetailPage = lazy(() => import('./pages/new/VouchersNewPage.jsx').then(m => ({ default: m.VoucherDetailPage })))
+const CashPage = lazy(() => import('./pages/new/CashPage.jsx'))
+const SettlementsPage = lazy(() => import('./pages/new/SettlementsPage.jsx'))
+const SearchPage = lazy(() => import('./pages/new/SearchPage.jsx'))
+const SourcesPage = lazy(() => import('./pages/new/SourcesPage.jsx'))
+const SettingsNewPage = lazy(() => import('./pages/new/SettingsNewPage.jsx'))
 
 export default function App() {
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route
-        path="/"
-        element={
-          <Protected>
-            <Layout />
-          </Protected>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-        <Route path="bookings" element={<BookingsPage />} />
-        <Route path="bookings/:id" element={<BookingDetailPage />} />
-        <Route path="vouchers" element={<VouchersPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="reports/golf" element={<GolfReportPage />} />
-        <Route path="reports/hotel" element={<HotelReportPage />} />
-      </Route>
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  )
+  return <AdminProvider><Suspense fallback={<div className="page-card">화면을 불러오는 중…</div>}><Routes>
+    <Route element={<NewLayout />}>
+      <Route path="/" element={<Navigate to="/ph/reservations" replace />} />
+      {['ph','th','jp'].map(code => [
+        <Route key={`${code}-list`} path={`/${code}/reservations`} element={<ReservationListPage market={code.toUpperCase()} />} />,
+        <Route key={`${code}-new`} path={`/${code}/reservations/new`} element={<ReservationDetailPage market={code.toUpperCase()} />} />,
+        <Route key={`${code}-detail`} path={`/${code}/reservations/:id`} element={<ReservationDetailPage market={code.toUpperCase()} />} />,
+      ])}
+      <Route path="/ph/clark/vouchers" element={<VouchersNewPage />} />
+      <Route path="/ph/clark/vouchers/:entryId" element={<VoucherDetailPage />} />
+      <Route path="/ph/cash" element={<CashPage />} />
+      <Route path="/settlements" element={<SettlementsPage />} />
+      <Route path="/search" element={<SearchPage />} />
+      <Route path="/sources" element={<SourcesPage />} />
+      <Route path="/sources/:batchId" element={<SourcesPage />} />
+      <Route path="/settings" element={<SettingsNewPage />} />
+      <Route path="/bookings" element={<Navigate to="/ph/reservations" replace />} />
+      <Route path="*" element={<div className="page-card">페이지를 찾을 수 없습니다.</div>} />
+    </Route>
+  </Routes></Suspense></AdminProvider>
 }
